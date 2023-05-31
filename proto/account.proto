@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package Account;
+
+service AccountService {
+  rpc findById (AccountIdParams) returns (AccountResponse) {}
+  rpc create (NewAccountParams) returns (AccountResponse) {}
+  rpc search (SearchAccountParams) returns (AccountsResponse) {}
+  rpc updateById (UpdateAccountParams) returns (AccountResponse) {}
+}
+
+message AccountProperties {
+  string id = 1;
+  string username = 2;
+  string password = 3;
+  string email = 4;
+  string name = 5;
+}
+
+// Service - Method's responses
+message AccountResponse {
+  bool isSuccess = 1;
+  string message = 2;
+  AccountProperties data = 3;
+}
+message AccountsData {
+  repeated AccountProperties data = 1;
+  int32 total = 2;
+}
+message AccountsResponse {
+  bool isSuccess = 1;
+  string message = 2;
+  AccountsData data = 3;
+}
+
+// Service - Params
+message AccountIdParams {
+  string id = 1;
+}
+message NewAccountParams {
+  string username = 1;
+  string password = 2;
+  string name = 3;
+  string email = 4;
+}
+message SearchAccountParams {
+  string keyword = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+message UpdateAccountPayload {
+  string name = 1;
+  string email = 2;
+}
+message UpdateAccountParams {
+  int32 id = 1;
+  UpdateAccountPayload data = 2;
+}

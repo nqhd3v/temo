@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package Event;
+
+service EventService {
+  rpc findById (EventIdParams) returns (EventResponse) {}
+  rpc create (NewEventParams) returns (EventResponse) {}
+  rpc search (SearchEventParams) returns (EventsResponse) {}
+  rpc updateById (UpdateEventParams) returns (EventResponse) {}
+}
+
+message EventProperties {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string type = 4;
+  string fee = 5;
+  string member = 6;
+}
+
+// Service - Method's responses
+message EventResponse {
+  bool isSuccess = 1;
+  string message = 2;
+  EventProperties data = 3;
+}
+message EventsData {
+  repeated EventProperties data = 1;
+  int32 total = 2;
+}
+message EventsResponse {
+  bool isSuccess = 1;
+  string message = 2;
+  EventsData data = 3;
+}
+
+// Service - Params
+message EventIdParams {
+  string id = 1;
+}
+message NewEventParams {
+  string title = 1;
+  string description = 2;
+  string type = 3;
+  string fee = 4;
+}
+message SearchEventParams {
+  string keyword = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string type = 4;
+}
+message UpdateEventPayload {
+  string title = 1;
+  string description = 2;
+}
+message UpdateEventParams {
+  int32 id = 1;
+  UpdateEventPayload data = 2;
+}
