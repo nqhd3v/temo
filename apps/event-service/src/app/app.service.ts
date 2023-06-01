@@ -6,8 +6,8 @@ import {
   EventTypeEnum,
   IEventSearchPayload,
   INewEventPayload,
-  IUpdateEventPayload,
 } from '@temo/database';
+import { EventModuleEnum } from 'libs/database/src/entities/event.entity';
 
 @Injectable()
 export class AppService {
@@ -20,8 +20,9 @@ export class AppService {
     const newEvent = this.eventRepository.create({
       title: payload.title,
       description: payload.description,
-      fee: payload.fee,
+      module: payload.module as EventModuleEnum,
       type: payload.type as EventTypeEnum,
+      data: payload.data,
     });
     return await this.eventRepository.save(newEvent);
   }
@@ -39,17 +40,17 @@ export class AppService {
     const keyword = payload$.keyword || '';
     const type = payload$.type || '';
 
-    let accountsQuery = this.eventRepository.createQueryBuilder('e');
-    accountsQuery = accountsQuery.where(
+    let eventsQuery = this.eventRepository.createQueryBuilder('e');
+    eventsQuery = eventsQuery.where(
       'title LIKE :keyword OR description LIKE :keyword',
       { keyword: `%${keyword}%` }
     );
     if (type) {
-      accountsQuery = accountsQuery.andWhere('type = :type', { type });
+      eventsQuery = eventsQuery.andWhere('type = :type', { type });
     }
-    const total = await accountsQuery.getCount();
-    accountsQuery = accountsQuery.skip((current - 1) * size).limit(size);
-    const data = await accountsQuery.getMany();
+    const total = await eventsQuery.getCount();
+    eventsQuery = eventsQuery.skip((current - 1) * size).limit(size);
+    const data = await eventsQuery.getMany();
 
     return {
       data,
@@ -57,19 +58,19 @@ export class AppService {
     };
   }
 
-  async updateById(id: string, data$: IUpdateEventPayload): Promise<Event> {
-    if (!data$.title || !data$.fee || !data$.type) {
-      throw new Error('exception.charge-event.invalid-input');
-    }
-    const current = await this.findById(id);
-    if (!current) {
-      throw new Error('exception.charge-event.notfound');
-    }
-    current.title = data$.title;
-    current.description = data$.description || '';
-    current.type = data$.type as EventTypeEnum;
-    current.fee = data$.fee;
+  // async updateById(id: string, data$: IUpdateEventPayload): Promise<Event> {
+  //   if (!data$.title || !data$.fee || !data$.type) {
+  //     throw new Error('exception.charge-event.invalid-input');
+  //   }
+  //   const current = await this.findById(id);
+  //   if (!current) {
+  //     throw new Error('exception.charge-event.notfound');
+  //   }
+  //   current.title = data$.title;
+  //   current.description = data$.description || '';
+  //   current.type = data$.type as EventTypeEnum;
+  //   current.fee = data$.fee;
 
-    return await this.eventRepository.save(current);
-  }
+  //   return await this.eventRepository.save(current);
+  // }
 }

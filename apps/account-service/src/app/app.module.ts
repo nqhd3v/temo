@@ -19,6 +19,15 @@ import { join } from 'path';
           protoPath: join(__dirname, '../../..', 'proto', 'event.proto'),
         },
       },
+      // {
+      //   name: 'WORKER_PACKAGE',
+      //   transport: Transport.GRPC,
+      //   options: {
+      //     url: 'localhost:4052',
+      //     package: 'Worker',
+      //     protoPath: join(__dirname, '../../..', 'proto', 'worker.proto'),
+      //   },
+      // },
     ]),
     DatabaseModule,
     TypeOrmModule.forFeature([Account]),

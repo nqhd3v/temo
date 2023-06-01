@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AccountService } from './account.service';
 import { IAccountResponse } from '@temo/database';
 import ResponseObj, { IResponseObject } from 'tools/response';
 import NewAccountDTO from './dto/new-account.dto';
+import { FileInterceptor } from '@temo/file';
 import SearchAccountsDTO from './dto/search-account.dto';
 
 @Controller('accounts')
@@ -35,6 +45,15 @@ export class AccountController {
       return ResponseObj.fail(res.message || 'exception.account.unknown');
     }
     return ResponseObj.success(res.data);
+  }
+
+  @Post('import')
+  @UseInterceptors(
+    FileInterceptor('file', { prefixFilename: 'account-import-' })
+  )
+  async importAccounts(@UploadedFile() file: Express.Multer.File) {
+    await this.accountService.addImportAccountToQueue(file.filename);
+    return ResponseObj.success({ file });
   }
 
   @Get()

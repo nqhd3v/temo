@@ -1,16 +1,12 @@
 import { Observable } from 'rxjs';
-import { IEventProperties, TEventType } from './charge-event.interface';
+import { IEventProperties, TEventModule, TEventType } from './event.interface';
 import { IResponseObject } from 'tools/response';
 
 export default interface IEventService {
-  findById({
-    id,
-  }: {
-    id: string;
-  }): Observable<IResponseObject<IEventProperties>>;
-  updateById(
-    payload: IUpdateEventPayload & IEventId
-  ): Observable<IResponseObject<IEventProperties>>;
+  findById({ id }: IEventId): Observable<IResponseObject<IEventProperties>>;
+  // updateById(
+  //   payload: IUpdateEventPayload & IEventId
+  // ): Observable<IResponseObject<IEventProperties>>;
   search(
     payload: IEventSearchPayload
   ): Observable<IResponseObject<{ data: IEventProperties[]; total: number }>>;
@@ -29,18 +25,18 @@ export interface IEventSearchPayload {
 export interface INewEventPayload {
   title: string;
   description?: string;
-  fee: number;
-  type: TEventType;
-  member: string;
+  module: TEventModule;
+  type?: TEventType;
+  data?: string;
 }
 
-export interface IUpdateEventPayload {
-  title: string;
-  description?: string;
-  fee: number;
-  type: TEventType;
-  member: string;
-}
+// export interface IUpdateEventPayload {
+//   title: string;
+//   description?: string;
+//   fee: number;
+//   type: TEventType;
+//   member: string;
+// }
 
 export interface IEventId {
   id: string;

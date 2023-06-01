@@ -9,3 +9,5 @@ acc-dev:
 	- nx serve account-service
 ev-dev:
 	- nx serve event-service
+wk-dev:
+	- nx serve worker-service

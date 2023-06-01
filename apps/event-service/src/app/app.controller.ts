@@ -8,7 +8,7 @@ import {
   IEventId,
   IEventSearchPayload,
   INewEventPayload,
-  IUpdateEventPayload,
+  // IUpdateEventPayload,
 } from '@temo/database';
 import ResponseObj, { IResponseObject } from 'tools/response';
 
@@ -36,25 +36,25 @@ export class AppController {
     return ResponseObj.success(data);
   }
 
-  @GrpcMethod('EventService', 'updateById')
-  async updateById(
-    payload$: IUpdateEventPayload & IEventId
-  ): Promise<IResponseObject<Event>> {
-    Logger.log(` 🚩 EventService - updateById(${JSON.stringify(payload$)})`);
-    const { id, ...updateData } = payload$;
-    if (!id) {
-      return ResponseObj.fail('exception.charge-event.id-undef');
-    }
-    const event = await this.appService.updateById(id, updateData);
-    if (!event) {
-      return ResponseObj.fail('exception.charge-event.notfound');
-    }
-    return ResponseObj.success(event);
-  }
+  // @GrpcMethod('EventService', 'updateById')
+  // async updateById(
+  //   payload$: IUpdateEventPayload & IEventId
+  // ): Promise<IResponseObject<Event>> {
+  //   Logger.log(` 🚩 EventService - updateById(${JSON.stringify(payload$)})`);
+  //   const { id, ...updateData } = payload$;
+  //   if (!id) {
+  //     return ResponseObj.fail('exception.charge-event.id-undef');
+  //   }
+  //   const event = await this.appService.updateById(id, updateData);
+  //   if (!event) {
+  //     return ResponseObj.fail('exception.charge-event.notfound');
+  //   }
+  //   return ResponseObj.success(event);
+  // }
 
   @GrpcMethod('EventService', 'create')
   async create(payload$: INewEventPayload): Promise<IResponseObject<Event>> {
-    Logger.log(` 🚩 EventService - updateById(${JSON.stringify(payload$)})`);
+    Logger.log(` 🚩 EventService - create(${JSON.stringify(payload$)})`);
     const event = await this.appService.createEvent(payload$);
 
     return ResponseObj.success(event);

@@ -10,8 +10,15 @@ import {
 import { nanoid } from 'nanoid';
 
 export enum EventTypeEnum {
-  MEETING_LATE = 'meeting-late',
-  LOGWORK_LATE = 'logwork-late',
+  LOG = 'log',
+  ERROR = 'error',
+  INFO = 'info',
+  PROGRESS = 'progress',
+}
+
+export enum EventModuleEnum {
+  EVENT = 'event',
+  ACCOUNT = 'account',
 }
 
 @Entity({ name: 'charge_event' })
@@ -33,11 +40,21 @@ export class Event {
   @Column({
     name: 'type',
     enum: EventTypeEnum,
+    default: EventTypeEnum.LOG,
   })
   public type: EventTypeEnum;
 
-  @Column()
-  public fee: number;
+  @Column({
+    name: 'module',
+    default: EventModuleEnum.EVENT,
+  })
+  public module: EventModuleEnum;
+
+  @Column({
+    name: 'data',
+    default: '{}',
+  })
+  public data: string;
 
   @CreateDateColumn({
     type: 'timestamptz',

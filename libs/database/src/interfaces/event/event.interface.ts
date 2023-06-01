@@ -2,12 +2,13 @@ export interface IEventProperties {
   id: string;
   title: string;
   description: string;
-  fee: number;
+  module: TEventModule;
   type: TEventType;
-  member: string;
+  data: string;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date;
 }
 
-export type TEventType = 'meeting-late' | 'logwork-late';
+export type TEventType = 'log' | 'error' | 'info' | 'progress';
+export type TEventModule = 'account' | 'event';

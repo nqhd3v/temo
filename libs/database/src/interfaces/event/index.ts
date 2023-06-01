@@ -1,10 +1,10 @@
-import { IEventProperties, TEventType } from './charge-event.interface';
+import { IEventProperties, TEventType } from './event.interface';
 import IEventService, {
   IEventSearchPayload,
   INewEventPayload,
-  IUpdateEventPayload,
+  // IUpdateEventPayload,
   IEventId,
-} from './charge-event-service.interface';
+} from './event-service.interface';
 
 export {
   IEventProperties,
@@ -12,6 +12,6 @@ export {
   IEventService,
   IEventSearchPayload,
   INewEventPayload,
-  IUpdateEventPayload,
+  // IUpdateEventPayload,
   IEventId,
 };

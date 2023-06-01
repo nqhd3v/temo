@@ -5,19 +5,28 @@ import {
   IAccountSearchPayload,
   INewAccountPayload,
   IAccountProperties,
+  IJobService,
+  JobNameEnum,
 } from '@temo/database';
+import { JobModuleEnum } from 'libs/database/src/entities/job.entity';
 import { lastValueFrom } from 'rxjs';
 import { IResponseObject } from 'tools/response';
 
 @Injectable()
 export class AccountService implements OnModuleInit {
   private accountMicroservice: IAccountService;
+  private workerMicroservice: IJobService;
 
-  constructor(@Inject('ACCOUNT_PACKAGE') private client: ClientGrpc) {}
+  constructor(
+    @Inject('ACCOUNT_PACKAGE') private accountClient: ClientGrpc,
+    @Inject('WORKER_PACKAGE') private workerClient: ClientGrpc
+  ) {}
 
   onModuleInit() {
     this.accountMicroservice =
-      this.client.getService<IAccountService>('AccountService');
+      this.accountClient.getService<IAccountService>('AccountService');
+    this.workerMicroservice =
+      this.workerClient.getService<IJobService>('WorkerService');
   }
 
   public async findById(
@@ -46,5 +55,17 @@ export class AccountService implements OnModuleInit {
   ): Promise<IResponseObject<IAccountProperties>> {
     const accountObservable = this.accountMicroservice.findById({ id });
     return await lastValueFrom(accountObservable);
+  }
+
+  public async addImportAccountToQueue(filePath: string) {
+    return await lastValueFrom(
+      this.workerMicroservice.create({
+        name: JobNameEnum.IMPORT_ACCOUNTS,
+        module: JobModuleEnum.ACCOUNT,
+        data: JSON.stringify({
+          filePath,
+        }),
+      })
+    );
   }
 }

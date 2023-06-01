@@ -7,8 +7,11 @@ import {
   INewAccountPayload,
   IAccountSearchPayload,
   IEventService,
+  EventTypeEnum,
+  IJobService,
 } from '@temo/database';
 import { lastValueFrom } from 'rxjs';
+import { EventModuleEnum } from 'libs/database/src/entities/event.entity';
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -17,12 +20,12 @@ export class AppService implements OnModuleInit {
   constructor(
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
-    @Inject('EVENT_PACKAGE') private client: ClientGrpc
+    @Inject('EVENT_PACKAGE') private eventClient: ClientGrpc
   ) {}
 
   onModuleInit() {
     this.eventMicroservice =
-      this.client.getService<IEventService>('EventService');
+      this.eventClient.getService<IEventService>('EventService');
   }
 
   async findById(id: string = ''): Promise<Account> {
@@ -42,8 +45,11 @@ export class AppService implements OnModuleInit {
     if (!data$.email || !data$.username || !data$.password || !data$.name) {
       throw new Error('exception.account.invalid-input');
     }
-    const currentAccount = await this.findByUsernameOrEmail(data$.username);
-    if (currentAccount) {
+    const currentAccountByUsername = await this.findByUsernameOrEmail(
+      data$.username
+    );
+    const currentAccountByEmail = await this.findByUsernameOrEmail(data$.email);
+    if (currentAccountByUsername || currentAccountByEmail) {
       throw new Error('exception.account.existed');
     }
     const newAccount = this.accountRepository.create({
@@ -54,13 +60,17 @@ export class AppService implements OnModuleInit {
     });
     const account = await this.accountRepository.save(newAccount);
     // create new event
-    const event = await lastValueFrom(
+    await lastValueFrom(
       this.eventMicroservice.create({
         title: 'System just created a new account!',
         description: 'An account was created automatic by system.',
-        type: 'logwork-late',
-        fee: 0,
-        member: account.id,
+        module: EventModuleEnum.ACCOUNT,
+        type: EventTypeEnum.LOG,
+        data: JSON.stringify({
+          id: account.id,
+          username: account.username,
+          email: account.email,
+        }),
       })
     );
     Logger.log(' - Added a new event to database');

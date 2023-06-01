@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@temo/database": ["libs/database/src/index.ts"]
+      "@temo/database": ["libs/database/src/index.ts"],
+      "@temo/file": ["libs/file/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

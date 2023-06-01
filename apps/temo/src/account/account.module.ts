@@ -3,6 +3,7 @@ import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -16,7 +17,17 @@ import { join } from 'path';
           protoPath: join(__dirname, '../../..', 'proto', 'account.proto'),
         },
       },
+      {
+        name: 'WORKER_PACKAGE',
+        transport: Transport.GRPC,
+        options: {
+          url: 'localhost:4052',
+          package: 'Worker',
+          protoPath: join(__dirname, '../../..', 'proto', 'worker.proto'),
+        },
+      },
     ]),
+    ConfigModule,
   ],
   controllers: [AccountController],
   providers: [AccountService],
