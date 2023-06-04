@@ -7,7 +7,9 @@ import {
   IAccountProperties,
   IJobService,
   JobNameEnum,
+  IJobProperties,
 } from '@temo/database';
+import { csvReaderAsync } from 'tools/csv-reader';
 import { JobModuleEnum } from 'libs/database/src/entities/job.entity';
 import { lastValueFrom } from 'rxjs';
 import { IResponseObject } from 'tools/response';
@@ -57,8 +59,10 @@ export class AccountService implements OnModuleInit {
     return await lastValueFrom(accountObservable);
   }
 
-  public async addImportAccountToQueue(filePath: string) {
-    return await lastValueFrom(
+  public async addImportAccountToQueue(
+    filePath: string
+  ): Promise<IJobProperties> {
+    const res = await lastValueFrom(
       this.workerMicroservice.create({
         name: JobNameEnum.IMPORT_ACCOUNTS,
         module: JobModuleEnum.ACCOUNT,
@@ -67,5 +71,14 @@ export class AccountService implements OnModuleInit {
         }),
       })
     );
+    if (!res.isSuccess) {
+      throw new Error('exception.worker.not-add-job');
+    }
+    return res.data;
+  }
+
+  public async importAccountsByFile(filepath: string) {
+    const { data: accounts } = await csvReaderAsync(filepath);
+    return accounts;
   }
 }

@@ -30,7 +30,9 @@ export class AppController {
   async findByUsernameOrEmail(
     data: IAccountSearchString
   ): Promise<IResponseObject<Account>> {
-    Logger.log(' - AccountService - findByUsernameOrEmail');
+    Logger.log(
+      ` 🚩 AccountService - findByUsernameOrEmail(${JSON.stringify(data)})`
+    );
     const account = await this.appService.findByUsernameOrEmail(
       data?.searchString
     );

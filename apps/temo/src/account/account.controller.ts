@@ -7,6 +7,8 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  ParseFilePipe,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { IAccountResponse } from '@temo/database';
@@ -14,10 +16,15 @@ import ResponseObj, { IResponseObject } from 'tools/response';
 import NewAccountDTO from './dto/new-account.dto';
 import { FileInterceptor } from '@temo/file';
 import SearchAccountsDTO from './dto/search-account.dto';
+import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
 
 @Controller('accounts')
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(
+    private readonly accountService: AccountService,
+    private readonly configService: ConfigService
+  ) {}
 
   @Get(':id')
   async getAccountById(
@@ -51,9 +58,51 @@ export class AccountController {
   @UseInterceptors(
     FileInterceptor('file', { prefixFilename: 'account-import-' })
   )
-  async importAccounts(@UploadedFile() file: Express.Multer.File) {
-    await this.accountService.addImportAccountToQueue(file.filename);
-    return ResponseObj.success({ file });
+  async importAccounts(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new FileTypeValidator({ fileType: 'csv' })],
+      })
+    )
+    file: Express.Multer.File
+  ): Promise<
+    IResponseObject<{
+      isInQueue: boolean;
+      data: any;
+      fileSize: Express.Multer.File['size'];
+    }>
+  > {
+    try {
+      if (file.size > 2097152) {
+        // File size greater than 2MB -> Add to queue
+        const job = await this.accountService.addImportAccountToQueue(
+          file.filename
+        );
+        return ResponseObj.success({
+          isInQueue: true,
+          data: {
+            jobId: job.id,
+          },
+          fileSize: file.size,
+        });
+      }
+      // Handle read file & create accounts.
+      const uploadFolder = this.configService.get('UPLOAD_DIR_PATH');
+      const data = await this.accountService.importAccountsByFile(
+        join(uploadFolder, file.filename)
+      );
+      return ResponseObj.success({
+        isInQueue: false,
+        fileSize: file.size,
+        data: {
+          created: 0,
+          failed: 0,
+          data,
+        },
+      });
+    } catch (err) {
+      return ResponseObj.fail(err.message);
+    }
   }
 
   @Get()
