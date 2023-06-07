@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { Logger, Controller } from '@nestjs/common';
 import ResponseObj, { IResponseObject } from 'tools/response';
 
 import { AppService } from './app.service';
@@ -9,24 +8,33 @@ import {
   IAccountSearchPayload,
   IAccountSearchString,
   INewAccountPayload,
+  INewEventPayload,
 } from '@temo/database';
+import { Observable, ReplaySubject } from 'rxjs';
+import {
+  EventModuleEnum,
+  EventTypeEnum,
+} from 'libs/database/src/entities/event.entity';
+import {
+  AccountResponse,
+  AccountServiceController,
+  AccountServiceControllerMethods,
+} from '../../../../proto/build/account.pb';
 
-@Injectable()
-export class AppController {
+@AccountServiceControllerMethods()
+export class AppController implements AccountServiceController {
   constructor(private readonly appService: AppService) {}
 
-  @GrpcMethod('AccountService', 'findById')
-  async findById(data: IAccountId): Promise<IResponseObject<Account>> {
+  async findById(data: IAccountId) {
     Logger.log(' - AccountService - findById');
     const account = await this.appService.findById(data?.id);
 
     if (!account) {
-      return ResponseObj.fail('account.notfound');
+      return ResponseObj.fail<Account>('account.notfound');
     }
-    return ResponseObj.success(account);
+    return ResponseObj.success<Account>(account);
   }
 
-  @GrpcMethod('AccountService', 'findByUsernameOrEmail')
   async findByUsernameOrEmail(
     data: IAccountSearchString
   ): Promise<IResponseObject<Account>> {
@@ -43,21 +51,77 @@ export class AppController {
     return ResponseObj.success(account);
   }
 
-  @GrpcMethod('AccountService', 'create')
-  async create(data: INewAccountPayload): Promise<IResponseObject<Account>> {
+  async create(data: INewAccountPayload) {
     Logger.log(` 🚩 AccountService - create(${JSON.stringify(data)})`);
     try {
       const newAccount = await this.appService.create(data);
-      return ResponseObj.success(newAccount);
+      // await lastValueFrom(
+      //   this.eventMicroservice.create({
+      //     title: 'System just created a new account!',
+      //     description: 'An account was created automatic by system.',
+      //     module: EventModuleEnum.ACCOUNT,
+      //     type: EventTypeEnum.LOG,
+      //     data: JSON.stringify({
+      //       id: newAccount.id,
+      //       username: newAccount.username,
+      //       email: newAccount.email,
+      //     }),
+      //   })
+      // );
+      return ResponseObj.success<Account>(newAccount);
     } catch (err) {
-      return ResponseObj.fail(err.message);
+      return ResponseObj.fail<Account>(err.message);
     }
   }
 
-  @GrpcMethod('AccountService', 'search')
-  async search(
-    data$: IAccountSearchPayload
-  ): Promise<IResponseObject<{ data: Account[]; total: number }>> {
+  async createMulti(
+    data$: { data: INewAccountPayload[] },
+    metadata$: Record<string, any> = {}
+  ) {
+    Logger.log(` 🚩 AccountService - createMulti(${JSON.stringify(data$)})`);
+    const { isSkipDuplicated } = metadata$;
+    const { data } = data$;
+    try {
+      const logEvent = new ReplaySubject<INewEventPayload>();
+
+      const newAccounts = await this.appService.createMulti(data, {
+        skipDuplicated: isSkipDuplicated,
+        onLogAfterCreated: (data) =>
+          logEvent.next({
+            title: 'System just created a new account!',
+            description: 'An account was created automatic by system.',
+            module: EventModuleEnum.ACCOUNT,
+            type: EventTypeEnum.LOG,
+            data: JSON.stringify({
+              id: data.id,
+              username: data.username,
+              email: data.email,
+            }),
+          }),
+      });
+
+      logEvent.complete();
+      // await this.eventMicroservice.streamCreate(logEvent);
+      // await lastValueFrom(
+      //   this.eventMicroservice.create({
+      //     title: 'System just created a new account!',
+      //     description: 'An account was created automatic by system.',
+      //     module: EventModuleEnum.ACCOUNT,
+      //     type: EventTypeEnum.LOG,
+      //     data: JSON.stringify({
+      //       id: newAccount.id,
+      //       username: newAccount.username,
+      //       email: newAccount.email,
+      //     }),
+      //   })
+      // );
+      return ResponseObj.success<Account[]>(newAccounts);
+    } catch (err) {
+      return ResponseObj.fail<Account[]>(err.message);
+    }
+  }
+
+  async search(data$: IAccountSearchPayload) {
     Logger.log(' - AccountService - search');
     const data = await this.appService.search(data$);
 

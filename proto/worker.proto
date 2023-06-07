@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
-
 package Worker;
 
 service WorkerService {
@@ -17,14 +15,12 @@ message JobProperties {
   string module = 4;
   string data = 5;
   string note = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp updated_at = 8;
 }
 
 // Service - Method's responses
 message JobResponse {
   bool isSuccess = 1;
-  string message = 2;
+  optional string message = 2;
   JobProperties data = 3;
 }
 message JobsData {
@@ -33,7 +29,7 @@ message JobsData {
 }
 message JobsResponse {
   bool isSuccess = 1;
-  string message = 2;
+  optional string message = 2;
   JobsData data = 3;
 }
 
@@ -43,17 +39,17 @@ message JobIdParams {
 }
 message NewJobParams {
   string name = 1;
-  string state = 2;
+  string data = 2;
   string module = 3;
-  string note = 4;
-  string data = 5;
+  optional string note = 4;
+  optional string state = 5;
 }
 message SearchJobsParams {
-  string name = 1;
-  int32 page = 2;
-  int32 size = 3;
-  string state = 4;
-  string module = 5;
+  optional string name = 1;
+  optional int32 page = 2;
+  optional int32 size = 3;
+  optional string state = 4;
+  optional string module = 5;
 }
 message UpdateJobParams {
   int32 state = 1;

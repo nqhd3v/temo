@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app/app.module';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { protobufPackage } from '../../../proto/build/account.pb';
 import { join } from 'path';
 
 async function bootstrap() {
@@ -12,7 +13,7 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         url: 'localhost:4050',
-        package: 'Account',
+        package: protobufPackage,
         protoPath: join(__dirname, '../../..', 'proto', 'account.proto'),
       },
     }

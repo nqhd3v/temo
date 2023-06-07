@@ -1,32 +1,19 @@
-import { Injectable, OnModuleInit, Inject, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClientGrpc } from '@nestjs/microservices';
 import {
   Account,
   INewAccountPayload,
   IAccountSearchPayload,
-  IEventService,
-  EventTypeEnum,
-  IJobService,
 } from '@temo/database';
-import { lastValueFrom } from 'rxjs';
-import { EventModuleEnum } from 'libs/database/src/entities/event.entity';
+import { AccountProperties } from 'proto/build/account.pb';
 
 @Injectable()
-export class AppService implements OnModuleInit {
-  private eventMicroservice: IEventService;
-
+export class AppService {
   constructor(
     @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
-    @Inject('EVENT_PACKAGE') private eventClient: ClientGrpc
+    private accountRepository: Repository<Account>
   ) {}
-
-  onModuleInit() {
-    this.eventMicroservice =
-      this.eventClient.getService<IEventService>('EventService');
-  }
 
   async findById(id: string = ''): Promise<Account> {
     const account = await this.accountRepository.findOne({ where: { id } });
@@ -59,23 +46,58 @@ export class AppService implements OnModuleInit {
       email: data$.email,
     });
     const account = await this.accountRepository.save(newAccount);
-    // create new event
-    await lastValueFrom(
-      this.eventMicroservice.create({
-        title: 'System just created a new account!',
-        description: 'An account was created automatic by system.',
-        module: EventModuleEnum.ACCOUNT,
-        type: EventTypeEnum.LOG,
-        data: JSON.stringify({
-          id: account.id,
-          username: account.username,
-          email: account.email,
-        }),
-      })
-    );
-    Logger.log(' - Added a new event to database');
 
     return account;
+  }
+
+  async createMulti(
+    data$: INewAccountPayload[],
+    options?: {
+      skipDuplicated?: boolean;
+      onLogAfterCreated?: (data: Account) => void;
+    }
+  ): Promise<Account[]> {
+    const { skipDuplicated, onLogAfterCreated } = options || {
+      skipDuplicated: false,
+      onLogAfterCreated: () => {},
+    };
+
+    const invalidAccounts = data$.filter(
+      (d) => !d.email || !d.username || !d.password || !d.name
+    );
+    if (invalidAccounts.length > 0) {
+      throw new Error('exception.account.invalid-input');
+    }
+
+    const nonDuplicatedAccountPromises = data$.map(async (d) => {
+      const accNeedCheckExisted = await this.findByUsernameOrEmail(d.username);
+      return accNeedCheckExisted ? null : d;
+    });
+    const nonDuplicatedAccounts = await Promise.all(
+      nonDuplicatedAccountPromises
+    );
+    if (nonDuplicatedAccounts.length !== data$.length && !skipDuplicated) {
+      throw new Error('exception.account.existed');
+    }
+
+    const accountPromises = nonDuplicatedAccounts
+      .filter((d) => d)
+      .map(async (d) => {
+        const newAccountData = this.accountRepository.create({
+          username: d.username,
+          password: d.password,
+          name: d.name,
+          email: d.email,
+        });
+        const newAccount = await this.accountRepository.save(newAccountData);
+        onLogAfterCreated(newAccount);
+
+        return newAccount;
+      });
+    // const accounts = await this.accountRepository.save(newAccounts);
+    const accounts = await Promise.all(accountPromises);
+
+    return accounts;
   }
 
   async search(

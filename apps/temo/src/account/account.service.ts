@@ -1,5 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
+import { AccountResponse, AccountServiceClient, AccountsResponse, SearchAccountParams } from '../../../../proto/build/account.pb'
+import { WorkerServiceClient } from '../../../../proto/build/worker.pb'
 import {
   IAccountService,
   IAccountSearchPayload,
@@ -8,16 +10,18 @@ import {
   IJobService,
   JobNameEnum,
   IJobProperties,
+  Account,
 } from '@temo/database';
 import { csvReaderAsync } from 'tools/csv-reader';
 import { JobModuleEnum } from 'libs/database/src/entities/job.entity';
 import { lastValueFrom } from 'rxjs';
 import { IResponseObject } from 'tools/response';
+import { NewAccountParams } from '../../../../proto/build/account.pb';
 
 @Injectable()
 export class AccountService implements OnModuleInit {
-  private accountMicroservice: IAccountService;
-  private workerMicroservice: IJobService;
+  private accountMicroservice: AccountServiceClient;
+  private workerMicroservice: WorkerServiceClient;
 
   constructor(
     @Inject('ACCOUNT_PACKAGE') private accountClient: ClientGrpc,
@@ -26,36 +30,29 @@ export class AccountService implements OnModuleInit {
 
   onModuleInit() {
     this.accountMicroservice =
-      this.accountClient.getService<IAccountService>('AccountService');
+      this.accountClient.getService<AccountServiceClient>('AccountService');
     this.workerMicroservice =
-      this.workerClient.getService<IJobService>('WorkerService');
+      this.workerClient.getService<WorkerServiceClient>('WorkerService');
   }
 
   public async findById(
     id: string
-  ): Promise<IResponseObject<IAccountProperties>> {
+  ): Promise<AccountResponse> {
     const accountObservable = this.accountMicroservice.findById({ id });
     return await lastValueFrom(accountObservable);
   }
 
   public async search(
-    payload: IAccountSearchPayload
-  ): Promise<IResponseObject<{ data: IAccountProperties[]; total: number }>> {
+    payload: SearchAccountParams
+  ): Promise<AccountsResponse> {
     const accountObservable = this.accountMicroservice.search(payload);
     return await lastValueFrom(accountObservable);
   }
 
   public async createOne(
-    payload: INewAccountPayload
-  ): Promise<IResponseObject<IAccountProperties>> {
+    payload: NewAccountParams
+  ): Promise<AccountResponse> {
     const accountObservable = this.accountMicroservice.create(payload);
-    return await lastValueFrom(accountObservable);
-  }
-
-  public async updateById(
-    id: string
-  ): Promise<IResponseObject<IAccountProperties>> {
-    const accountObservable = this.accountMicroservice.findById({ id });
     return await lastValueFrom(accountObservable);
   }
 
@@ -78,7 +75,13 @@ export class AccountService implements OnModuleInit {
   }
 
   public async importAccountsByFile(filepath: string) {
-    const { data: accounts } = await csvReaderAsync(filepath);
-    return accounts;
+    const res = await csvReaderAsync<Account>(filepath);
+    if (res.type === 'array') {
+      throw new Error('internal.account.invalid-data');
+    }
+    const newAccounts = await lastValueFrom(
+      this.accountMicroservice.createMulti(res)
+    );
+    return newAccounts;
   }
 }

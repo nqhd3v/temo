@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   BeforeInsert,
+  Timestamp,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { nanoid } from 'nanoid';

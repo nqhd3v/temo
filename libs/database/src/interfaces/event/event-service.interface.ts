@@ -13,6 +13,9 @@ export default interface IEventService {
   create(
     payload: INewEventPayload
   ): Observable<IResponseObject<IEventProperties>>;
+  streamCreate(
+    payload: Observable<INewEventPayload>
+  ): Observable<IResponseObject<IEventProperties>>;
 }
 
 export interface IEventSearchPayload {

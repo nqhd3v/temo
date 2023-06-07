@@ -25,19 +25,19 @@ export const csvReaderStream = (
   }
 };
 
-type CSVDataRecords = {
+type CSVDataRecords<T> = {
   type: 'records';
-  data: Record<string, any>[];
+  data: T[];
 };
 type CSVDataArray = {
   type: 'array';
   data: string[][];
 };
-export const csvReaderAsync = async (
+export const csvReaderAsync = async <T extends Object>(
   filepath: string,
   toRecords: boolean = true,
   options?: Options
-): Promise<CSVDataRecords | CSVDataArray> => {
+): Promise<CSVDataRecords<T> | CSVDataArray> => {
   const path = join(__dirname, '../../..', filepath);
 
   const records: string[][] = [];
@@ -55,7 +55,7 @@ export const csvReaderAsync = async (
   if (toRecords) {
     return {
       type: 'records',
-      data: arr2Records(records),
+      data: arr2Records<T>(records),
     };
   }
   return {
@@ -64,10 +64,10 @@ export const csvReaderAsync = async (
   };
 };
 
-const arr2Records = (arr: string[][]): Record<string, any>[] => {
+const arr2Records = <T extends Object>(arr: string[][]): T[] => {
   const [keys, ...data] = arr;
   return data.map((dataItem) => {
-    const res: Record<string, any> = {};
+    const res: T = {} as T;
     keys.forEach((key, index) => {
       res[key] = dataItem[index];
     });

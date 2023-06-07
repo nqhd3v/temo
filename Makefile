@@ -2,6 +2,8 @@ up:
 	- docker-compose up -d --remove-orphans
 down:
 	- docker-compose down
+proto:
+	- npm run proto:build
 
 gw-dev:
 	- nx serve temo

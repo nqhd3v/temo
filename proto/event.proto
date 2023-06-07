@@ -5,9 +5,10 @@ import "google/protobuf/timestamp.proto";
 package Event;
 
 service EventService {
-  rpc findById (EventIdParams) returns (EventResponse) {}
-  rpc create (NewEventParams) returns (EventResponse) {}
-  rpc search (SearchEventParams) returns (EventsResponse) {}
+  rpc findById (EventIdParams) returns (EventResponse) {};
+  rpc create (NewEventParams) returns (EventResponse) {};
+  rpc streamCreate (stream NewEventParams) returns (EventResponse);
+  rpc search (SearchEventParams) returns (EventsResponse) {};
   // rpc updateById (UpdateEventParams) returns (EventResponse) {}
 }
 
@@ -20,7 +21,6 @@ message EventProperties {
   string data = 6;
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
-  google.protobuf.Timestamp deleted_at = 9;
 }
 
 // Service - Method's responses

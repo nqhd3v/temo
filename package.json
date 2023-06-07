@@ -2,7 +2,9 @@
   "name": "@temo/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "proto:build": "protoc --plugin=node_modules/.bin/protoc-gen-ts_proto.cmd -I=./proto --ts_proto_out=./proto/build ./proto/*.proto --ts_proto_opt=nestJs=true --ts_proto_opt=fileSuffix=.pb --ts_proto_opt=snakeToCamel=false"
+  },
   "private": true,
   "dependencies": {
     "@grpc/grpc-js": "^1.8.14",
@@ -26,6 +28,7 @@
     "pg": "^8.11.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
+    "ts-proto": "^1.148.2",
     "tslib": "^2.3.0",
     "typeorm": "^0.3.16"
   },

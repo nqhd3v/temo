@@ -40,6 +40,7 @@ export class AccountController {
     delete account.password;
     delete account.updated_at;
     delete account.deleted_at;
+    account.created_at.
 
     return ResponseObj.success(account);
   }

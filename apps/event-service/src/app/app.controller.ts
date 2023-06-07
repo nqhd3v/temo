@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppService } from './app.service';
-import { GrpcMethod } from '@nestjs/microservices';
+import { EventServiceControllerMethods } from '../../../../proto/build/event.pb';
 
 import {
   Event,
@@ -11,12 +11,12 @@ import {
   // IUpdateEventPayload,
 } from '@temo/database';
 import ResponseObj, { IResponseObject } from 'tools/response';
+import { Observable, Subject } from 'rxjs';
 
-@Injectable()
+@EventServiceControllerMethods()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @GrpcMethod('EventService', 'getById')
   async getById(data$: IEventId): Promise<IResponseObject<Event>> {
     Logger.log(` 🚩 EventService - getById("${data$.id || ''}")`);
     const event = await this.appService.findById(data$.id);
@@ -26,7 +26,6 @@ export class AppController {
     return ResponseObj.success(event);
   }
 
-  @GrpcMethod('EventService', 'search')
   async search(
     payload$: IEventSearchPayload
   ): Promise<IResponseObject<{ data: Event[]; total: number }>> {
@@ -36,23 +35,32 @@ export class AppController {
     return ResponseObj.success(data);
   }
 
-  // @GrpcMethod('EventService', 'updateById')
-  // async updateById(
-  //   payload$: IUpdateEventPayload & IEventId
-  // ): Promise<IResponseObject<Event>> {
-  //   Logger.log(` 🚩 EventService - updateById(${JSON.stringify(payload$)})`);
-  //   const { id, ...updateData } = payload$;
-  //   if (!id) {
-  //     return ResponseObj.fail('exception.charge-event.id-undef');
-  //   }
-  //   const event = await this.appService.updateById(id, updateData);
-  //   if (!event) {
-  //     return ResponseObj.fail('exception.charge-event.notfound');
-  //   }
-  //   return ResponseObj.success(event);
-  // }
+  async streamCreate(
+    data$: Observable<INewEventPayload>,
+    metadata$: Record<string, any>
+  ) {
+    Logger.log(
+      ` 🚩 EventService - streamCreate - ${typeof data$} - ${JSON.stringify(
+        data$
+      )} - ${JSON.stringify(metadata$)}`
+    );
+    const subject = new Subject();
 
-  @GrpcMethod('EventService', 'create')
+    const onNext = (message) => {
+      console.log(message);
+      subject.next({
+        reply: 'Hello, world!',
+      });
+    };
+    const onComplete = () => subject.complete();
+    data$.subscribe({
+      next: onNext,
+      complete: onComplete,
+    });
+
+    return subject.asObservable();
+  }
+
   async create(payload$: INewEventPayload): Promise<IResponseObject<Event>> {
     Logger.log(` 🚩 EventService - create(${JSON.stringify(payload$)})`);
     const event = await this.appService.createEvent(payload$);

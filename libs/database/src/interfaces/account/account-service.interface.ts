@@ -15,6 +15,10 @@ export default interface IAccountService {
   create(
     payload: INewAccountPayload
   ): Observable<IResponseObject<IAccountProperties>>;
+  createMulti(
+    payload: { data: INewAccountPayload[] },
+    metadata: { isSkipDuplicated?: boolean }
+  ): Observable<IResponseObject<IAccountProperties[]>>;
 }
 
 export interface IAccountSearchPayload {

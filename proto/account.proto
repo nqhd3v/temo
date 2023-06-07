@@ -1,12 +1,15 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package Account;
 
 service AccountService {
   rpc findById (AccountIdParams) returns (AccountResponse) {}
   rpc create (NewAccountParams) returns (AccountResponse) {}
+  rpc createMulti (NewAccountsParams) returns (CreateAccountsResponse) {}
   rpc search (SearchAccountParams) returns (AccountsResponse) {}
-  rpc updateById (UpdateAccountParams) returns (AccountResponse) {}
+  // rpc updateById (UpdateAccountParams) returns (AccountResponse) {}
 }
 
 message AccountProperties {
@@ -15,13 +18,21 @@ message AccountProperties {
   string password = 3;
   string email = 4;
   string name = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp deleted_at = 8;
 }
 
 // Service - Method's responses
 message AccountResponse {
   bool isSuccess = 1;
-  string message = 2;
+  optional string message = 2;
   AccountProperties data = 3;
+}
+message CreateAccountsResponse {
+  bool isSuccess = 1;
+  optional string message = 2;
+  repeated AccountProperties data = 3;
 }
 message AccountsData {
   repeated AccountProperties data = 1;
@@ -29,7 +40,7 @@ message AccountsData {
 }
 message AccountsResponse {
   bool isSuccess = 1;
-  string message = 2;
+  optional string message = 2;
   AccountsData data = 3;
 }
 
@@ -42,6 +53,9 @@ message NewAccountParams {
   string password = 2;
   string name = 3;
   string email = 4;
+}
+message NewAccountsParams {
+  repeated NewAccountParams data = 1;
 }
 message SearchAccountParams {
   string keyword = 1;

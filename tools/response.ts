@@ -9,6 +9,7 @@ export default class ResponseObj {
     return {
       isSuccess: false,
       message,
+      data: null,
     };
   }
 }
@@ -16,5 +17,5 @@ export default class ResponseObj {
 export interface IResponseObject<T> {
   isSuccess: boolean;
   message?: string;
-  data?: T;
+  data: T | null;
 }
